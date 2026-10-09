@@ -1,5 +1,11 @@
 export const APP_URL = 'https://app.propertysetu.com';
-export const API_URL = (import.meta.env['VITE_API_URL'] || 'http://192.168.1.12:4000').replace(/\/$/, '');
+function resolveApiUrl() {
+ const configured = import.meta.env['VITE_API_URL'];
+ if (typeof configured === 'string' && configured.trim()) return configured.replace(/\/$/, '');
+ if (typeof window !== 'undefined' && window.location.hostname) return `http://${window.location.hostname}:4000`;
+ return 'http://127.0.0.1:4000';
+}
+export const API_URL = resolveApiUrl();
 export const TOKEN_KEY = 'propertysetu_admin_token';
 export function money(value: number) { return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(value); }
 export function label(value: string) { return value.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }

@@ -17,6 +17,7 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
@@ -62,6 +63,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBannersRoute = AdminBannersRouteImport.update({
+  id: '/banners',
+  path: '/banners',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
   '/privacy': typeof PrivacyRoute
+  '/admin/banners': typeof AdminBannersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
   '/privacy': typeof PrivacyRoute
+  '/admin/banners': typeof AdminBannersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
   '/privacy': typeof PrivacyRoute
+  '/admin/banners': typeof AdminBannersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/listings'
     | '/privacy'
+    | '/admin/banners'
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/reports'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/listings'
     | '/privacy'
+    | '/admin/banners'
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/reports'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/listings'
     | '/privacy'
+    | '/admin/banners'
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/reports'
@@ -237,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/banners': {
+      id: '/admin/banners'
+      path: '/banners'
+      fullPath: '/admin/banners'
+      preLoaderRoute: typeof AdminBannersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/payments': {
       id: '/admin/payments'
       path: '/payments'
@@ -269,6 +288,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminBannersRoute: typeof AdminBannersRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminReportsRoute: typeof AdminReportsRoute
@@ -277,6 +297,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBannersRoute: AdminBannersRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminReportsRoute: AdminReportsRoute,

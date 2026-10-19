@@ -8,7 +8,7 @@ function resolveApiUrl() {
  if (typeof window !== 'undefined' && sameMachineApi(window.location.hostname)) return `http://${window.location.hostname}:4000`;
  const configured = import.meta.env['VITE_API_URL'];
  if (typeof configured === 'string' && configured.trim()) return configured.replace(/\/$/, '');
- return 'http://127.0.0.1:4000';
+ return 'https://property-setu-backend.vercel.app';
 }
 export const API_URL = resolveApiUrl();
 export const TOKEN_KEY = 'propertysetu_admin_token';
@@ -27,8 +27,9 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
  try {
   const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
  const response = await fetch(`${API_URL}${path}`, { ...options, signal:controller.signal, headers: { ...(options.body && !isForm ? {'Content-Type':'application/json'} : {}), ...(token ? {Authorization:`Bearer ${token}`} : {}), ...options.headers } });
+  if (response.status === 204) return undefined as T;
   const data = await response.json();
-  if (!response.ok) throw new ApiError(data.code === 'email_not_verified' ? 'Open your verification email before signing in.' : data.error || 'The request could not be completed.', response.status);
+  if (!response.ok) throw new ApiError(data.error || 'The request could not be completed.', response.status);
   return data as T;
  } catch (error) { if(error instanceof ApiError) throw error; throw new Error('Unable to reach PropertySetu. Please check your connection and try again.'); }
  finally { clearTimeout(timeout); }

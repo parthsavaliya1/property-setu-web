@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Status, useAdmin } from './admin';
+import { ThemeSettings } from './theme-settings';
 
 type ListingSettings = {
   standardPrice: number;
@@ -167,11 +168,13 @@ export function Settings() {
 
   return <>
     <h1>Settings</h1>
-    <p className="admin-subtitle">Listing amounts, premium offers, and demo logins that skip SMS.</p>
+    <p className="admin-subtitle">Colour theme, listing amounts, premium offers, and demo logins that skip SMS.</p>
     {error ? <div role="alert" className="error-notice">{error}</div> : null}
     {notice ? <div className="settings-preview">{notice}</div> : null}
 
-    <section className="admin-section" style={{ marginTop: 0 }}>
+    <ThemeSettings />
+
+    <section className="admin-section">
       <div className="admin-section-head"><h2>Listing amounts</h2></div>
       <p className="text-sm text-muted-foreground">Set the monthly fee in rupees. Example: regular 20, premium 30. A premium offer of 20 shows 20% off and the rupees saved.</p>
       <form onSubmit={savePrices}>

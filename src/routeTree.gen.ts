@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminPreviewRouteImport } from './routes/admin-preview'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
@@ -39,6 +41,11 @@ const AdminPreviewRoute = AdminPreviewRouteImport.update({
   path: '/admin-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FeaturesRoute = FeaturesRouteImport.update({
   id: '/features',
   path: '/features',
@@ -57,6 +64,11 @@ const ListingsRoute = ListingsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -99,10 +111,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-preview': typeof AdminPreviewRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -114,10 +128,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-preview': typeof AdminPreviewRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -131,10 +147,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-preview': typeof AdminPreviewRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -149,10 +167,12 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin-preview'
+    | '/delete-account'
     | '/features'
     | '/how-it-works'
     | '/listings'
     | '/privacy'
+    | '/terms'
     | '/admin/banners'
     | '/admin/payments'
     | '/admin/properties'
@@ -164,10 +184,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin-preview'
+    | '/delete-account'
     | '/features'
     | '/how-it-works'
     | '/listings'
     | '/privacy'
+    | '/terms'
     | '/admin/banners'
     | '/admin/payments'
     | '/admin/properties'
@@ -180,10 +202,12 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin-preview'
+    | '/delete-account'
     | '/features'
     | '/how-it-works'
     | '/listings'
     | '/privacy'
+    | '/terms'
     | '/admin/banners'
     | '/admin/payments'
     | '/admin/properties'
@@ -197,10 +221,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AdminPreviewRoute: typeof AdminPreviewRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
   FeaturesRoute: typeof FeaturesRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ListingsRoute: typeof ListingsRoute
   PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,6 +250,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-preview'
       fullPath: '/admin-preview'
       preLoaderRoute: typeof AdminPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/features': {
@@ -252,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -332,10 +372,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AdminPreviewRoute: AdminPreviewRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
   FeaturesRoute: FeaturesRoute,
   HowItWorksRoute: HowItWorksRoute,
   ListingsRoute: ListingsRoute,
   PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

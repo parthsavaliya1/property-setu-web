@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { ThemeLoader } from "../components/propertysetu/theme-loader";
 
 function NotFoundComponent() {
   return (
@@ -109,6 +110,11 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("propertysetu-theme");var ok=["terracotta","fresh-green","cream-mango","classic-green","olive-ivory","teal-pistachio","winter","summer","monsoon"];if(ok.indexOf(t)>=0)document.documentElement.dataset.theme=t;}catch(e){}})();`,
+          }}
+        />
         {children}
         <Scripts />
       </body>
@@ -121,6 +127,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeLoader />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

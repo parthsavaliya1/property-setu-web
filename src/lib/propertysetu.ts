@@ -1,4 +1,5 @@
 export const APP_URL = 'https://app.propertysetu.com';
+export const SUPPORT_EMAIL = 'propertysetu.support@gmail.com';
 function sameMachineApi(hostname: string) {
  return hostname === 'localhost' || hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
 }

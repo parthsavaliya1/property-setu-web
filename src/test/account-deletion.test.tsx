@@ -3,7 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 
 const { request } = vi.hoisted(() => ({ request: vi.fn() }));
-vi.mock('@/lib/propertysetu', () => ({ api: request, metadata: () => ({}) }));
+vi.mock('@/lib/propertysetu', () => ({ api: request, metadata: () => ({}), SUPPORT_EMAIL: 'support@example.com' }));
 vi.mock('@/components/propertysetu/site', () => ({ SiteHeader: () => null, Footer: () => null, PageIntro: () => <h1>Delete account</h1> }));
 vi.mock('@tanstack/react-router', () => ({ createFileRoute: () => (options: unknown) => ({ options }), Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
 import { Route } from '@/routes/delete-account';

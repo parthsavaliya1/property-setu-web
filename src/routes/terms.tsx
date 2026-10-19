@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { SiteHeader, PageIntro, Footer } from '@/components/propertysetu/site';
-import { metadata, API_URL } from '@/lib/propertysetu';
+import { metadata, SUPPORT_EMAIL } from '@/lib/propertysetu';
 import { termsSections } from '@/lib/termsContent';
 
 export const Route = createFileRoute('/terms')({
@@ -22,7 +22,7 @@ function TermsPage() {
             <h2>Privacy, deletion and support</h2>
             <p><Link to="/privacy">Read our Privacy Policy</Link></p>
             <p><Link to="/delete-account">Delete your account without installing the app</Link></p>
-            <p><a href={`${API_URL}/privacy`}>View current support contact information</a></p>
+            <p>For support or moderation appeals, email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
           </section>
         </article>
       </main>

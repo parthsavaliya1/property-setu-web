@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { Footer, PageIntro, SiteHeader } from '@/components/propertysetu/site';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { api, metadata } from '@/lib/propertysetu';
+import { api, metadata, SUPPORT_EMAIL } from '@/lib/propertysetu';
 
 export const Route = createFileRoute('/delete-account')({
   head: () => metadata('Delete account', 'Verify your mobile number and permanently delete your PropertySetu account without installing the app.'),
@@ -86,6 +86,7 @@ function DeleteAccountPage() {
           </form>}
         </section>
         <p><Link to="/privacy">Read our Privacy Policy</Link></p>
+        <p>Need help or cannot access your registered number? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for account-deletion assistance.</p>
       </article>
     </main>
     <Footer />

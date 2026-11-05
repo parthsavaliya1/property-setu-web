@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminPreviewRouteImport } from './routes/admin-preview'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ListingsRouteImport } from './routes/listings'
@@ -44,6 +45,11 @@ const AdminPreviewRoute = AdminPreviewRouteImport.update({
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
   id: '/delete-account',
   path: '/delete-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeaturesRoute = FeaturesRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/admin-preview': typeof AdminPreviewRoute
   '/delete-account': typeof DeleteAccountRoute
+  '/explore': typeof ExploreRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-preview': typeof AdminPreviewRoute
   '/delete-account': typeof DeleteAccountRoute
+  '/explore': typeof ExploreRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/admin-preview': typeof AdminPreviewRoute
   '/delete-account': typeof DeleteAccountRoute
+  '/explore': typeof ExploreRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-preview'
     | '/delete-account'
+    | '/explore'
     | '/features'
     | '/how-it-works'
     | '/listings'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-preview'
     | '/delete-account'
+    | '/explore'
     | '/features'
     | '/how-it-works'
     | '/listings'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-preview'
     | '/delete-account'
+    | '/explore'
     | '/features'
     | '/how-it-works'
     | '/listings'
@@ -222,6 +234,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdminPreviewRoute: typeof AdminPreviewRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
+  ExploreRoute: typeof ExploreRoute
   FeaturesRoute: typeof FeaturesRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ListingsRoute: typeof ListingsRoute
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/delete-account'
       fullPath: '/delete-account'
       preLoaderRoute: typeof DeleteAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/features': {
@@ -373,6 +393,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdminPreviewRoute: AdminPreviewRoute,
   DeleteAccountRoute: DeleteAccountRoute,
+  ExploreRoute: ExploreRoute,
   FeaturesRoute: FeaturesRoute,
   HowItWorksRoute: HowItWorksRoute,
   ListingsRoute: ListingsRoute,

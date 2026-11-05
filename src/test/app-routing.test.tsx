@@ -14,4 +14,14 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+  it("keeps the app-style explorer separate from the original home and listings pages", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const home = router.matchRoutes("/").at(-1);
+    const listings = router.matchRoutes("/listings").at(-1);
+    const explorer = router.matchRoutes("/explore").at(-1);
+
+    expect(home?.routeId).toBe("/");
+    expect(listings?.routeId).toBe("/listings");
+    expect(explorer?.routeId).toBe("/explore");
+  });
 });

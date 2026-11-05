@@ -1,4 +1,4 @@
-export const APP_URL = 'https://app.propertysetu.com';
+export const APP_URL = '/explore';
 export const SUPPORT_EMAIL = 'propertysetu.support@gmail.com';
 function sameMachineApi(hostname: string) {
  return hostname === 'localhost' || hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
@@ -23,8 +23,8 @@ export function displayPrice(value: number | string | null | undefined) {
 export function label(value: string) { return value.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }
 export function metadata(title: string, description: string) { return { meta: [{ title: `${title} — PropertySetu` }, { name:'description', content:description }, { property:'og:title', content:`${title} — PropertySetu` }, { property:'og:description', content:description }, { property:'og:type', content:'website' }, { name:'twitter:card', content:'summary_large_image' }] }; }
 export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
-export async function api<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
- const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 20000);
+export async function api<T>(path: string, options: RequestInit = {}, token?: string, timeoutMs = 20000): Promise<T> {
+ const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), timeoutMs);
  try {
   const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
  const response = await fetch(`${API_URL}${path}`, { ...options, signal:controller.signal, headers: { ...(options.body && !isForm ? {'Content-Type':'application/json'} : {}), ...(token ? {Authorization:`Bearer ${token}`} : {}), ...options.headers } });
@@ -32,6 +32,6 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
   const data = await response.json();
   if (!response.ok) throw new ApiError(data.error || 'The request could not be completed.', response.status);
   return data as T;
- } catch (error) { if(error instanceof ApiError) throw error; throw new Error('Unable to reach PropertySetu. Please check your connection and try again.'); }
+ } catch (error) { if(error instanceof ApiError) throw error; if(controller.signal.aborted) throw new Error('PropertySetu took too long to respond. Please try again.'); throw new Error('Unable to reach PropertySetu. Please check your connection and try again.'); }
  finally { clearTimeout(timeout); }
 }

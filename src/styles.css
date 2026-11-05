@@ -848,3 +848,18 @@ button.faq-trigger:hover { background:var(--secondary); }
  .xp-profile-wallet h2{font-size:32px;margin:8px 0 24px}.xp-profile-wallet .xp-actions{display:flex;gap:12px}.xp-profile-wallet .xp-actions>*{flex:1;justify-content:center}
  .xp-profile-properties{margin-top:8px}.xp-profile-properties>h2{font-size:22px;margin:0 0 20px}
 }
+
+/* Listing intent: concise descriptions, distinct icons, and a visible selection. */
+@media(min-width:701px){
+ .xp-app .xp-listing-intent{gap:12px}
+ .xp-app .xp-listing-intent>button{display:grid;grid-template-columns:40px minmax(0,1fr) 18px;align-items:center;gap:12px;min-height:94px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--card);text-transform:none;transition:border-color .15s,background .15s,box-shadow .15s}
+ .xp-app .xp-listing-intent>button:hover{border-color:var(--primary);background:color-mix(in srgb,var(--secondary) 40%,var(--card))}
+ .xp-app .xp-listing-intent>button.selected{border-color:var(--primary);background:color-mix(in srgb,var(--secondary) 65%,var(--card));box-shadow:0 0 0 1px var(--primary)}
+ .xp-app .xp-listing-intent .xp-intent-icon{display:grid;place-items:center;width:40px;height:40px;margin:0;border-radius:12px;background:var(--background);color:var(--muted-foreground)}
+ .xp-app .xp-listing-intent .selected .xp-intent-icon{background:var(--primary);color:var(--primary-foreground)}
+ .xp-app .xp-listing-intent .xp-intent-copy{display:block;margin:0;min-width:0}
+ .xp-app .xp-listing-intent .xp-intent-title{display:block;font-size:15px;line-height:20px;font-weight:700;color:var(--foreground)}
+ .xp-app .xp-listing-intent small{display:block;margin-top:4px;font-size:12px;line-height:17px;font-weight:400;color:var(--muted-foreground)}
+ .xp-app .xp-listing-intent .xp-intent-indicator{display:grid;place-items:center;width:18px;height:18px;margin:0;border:1.5px solid var(--border);border-radius:50%;background:var(--card)}
+ .xp-app .xp-listing-intent .selected .xp-intent-indicator{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+}

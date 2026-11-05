@@ -9,6 +9,10 @@ import { useMobileLayout } from "./use-mobile-layout";
 import { useEffect, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { Fragment } from "react/jsx-runtime";
 import {
+  Tag,
+  KeyRound,
+  FileCheck2,
+  BedDouble,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -32,6 +36,33 @@ import {
 import type { Category, PropertyDetail } from "@/lib/explorer-types";
 import { useAction, useProduct, useResource } from "./context";
 import { ActionError, ExploreLink, Field, PageHeading, RemoteState } from "./ui";
+const listingIntents = [
+  {
+    value: "sale",
+    label: "Sell",
+    description: "Find the right buyer for your property",
+    icon: Tag,
+  },
+  {
+    value: "rent",
+    label: "Rent",
+    description: "Offer your property for monthly rent",
+    icon: KeyRound,
+  },
+  {
+    value: "lease",
+    label: "Lease",
+    description: "Let your property on a lease agreement",
+    icon: FileCheck2,
+  },
+  {
+    value: "pg",
+    label: "PG / Co-living",
+    description: "List shared living or paying guest spaces",
+    icon: BedDouble,
+  },
+] as const;
+
 const desktopSteps = [
   "Property type",
   "The details",
@@ -454,30 +485,38 @@ export function CreatePropertyPage({ id }: { id?: string }) {
   const listingFields = (
     <>
       <Field label="I want to">
-        <div className="xp-choice-grid">
-          {["sale", "rent", "lease", "pg"].map((value) => (
+        <div className="xp-choice-grid xp-listing-intent" role="group" aria-label="Listing type">
+          {listingIntents.map(({ value, label, description, icon: Icon }) => (
             <button
               type="button"
               aria-pressed={draft.listing_type === value}
-              aria-label={
-                value === "sale" ? "Sell" : value === "pg" ? "PG / Co-living" : readable(value)
-              }
+              aria-label={label}
               className={draft.listing_type === value ? "selected" : ""}
               onClick={() => set("listing_type", value)}
               key={value}
             >
-              <span>
-                {value === "sale" ? "Sell" : value === "pg" ? "PG / Co-living" : readable(value)}
-                {mobile && (
-                  <small>
-                    {value === "sale"
+              {!mobile && (
+                <span className="xp-intent-icon" aria-hidden="true">
+                  <Icon size={20} strokeWidth={1.75} />
+                </span>
+              )}
+              <span className="xp-intent-copy">
+                <span className="xp-intent-title">{label}</span>
+                <small>
+                  {mobile
+                    ? value === "sale"
                       ? "I want to sell this property"
                       : value === "pg"
                         ? "I want to rent as PG / Co-living"
-                        : `I want to ${value} this property`}
-                  </small>
-                )}
+                        : `I want to ${value} this property`
+                    : description}
+                </small>
               </span>
+              {!mobile && (
+                <span className="xp-intent-indicator" aria-hidden="true">
+                  {draft.listing_type === value && <Check size={11} strokeWidth={3} />}
+                </span>
+              )}
             </button>
           ))}
         </div>

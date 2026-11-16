@@ -863,3 +863,18 @@ button.faq-trigger:hover { background:var(--secondary); }
  .xp-app .xp-listing-intent .xp-intent-indicator{display:grid;place-items:center;width:18px;height:18px;margin:0;border:1.5px solid var(--border);border-radius:50%;background:var(--card)}
  .xp-app .xp-listing-intent .selected .xp-intent-indicator{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
 }
+
+/* Listing sign-in prompt: compact on desktop and phones. */
+.xp-modal.xp-create-login-prompt{width:min(420px,calc(100vw - 32px));padding:36px 30px 24px;border-radius:24px;text-align:center;box-shadow:0 24px 80px #3625152b;font-family:'Source Sans 3',sans-serif}
+.xp-create-login-close{position:absolute;top:14px;right:14px;display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:var(--muted-foreground);cursor:pointer}
+.xp-create-login-close:hover{background:var(--secondary);color:var(--foreground)}
+.xp-create-login-icon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 20px;border-radius:20px;background:var(--secondary);color:var(--primary)}
+.xp-create-login-eyebrow{display:block;margin-bottom:10px;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--primary)}
+.xp-modal.xp-create-login-prompt>h2{max-width:300px;margin:0 auto 12px;font-size:27px;line-height:1.2;font-weight:700;letter-spacing:-.025em}
+.xp-modal.xp-create-login-prompt>p{margin:0 auto;max-width:310px;font-size:15px;line-height:1.6}
+.xp-create-login-actions{display:grid;gap:8px;margin-top:26px}
+.xp-create-login-actions>.xp-button{width:100%;min-height:48px;justify-content:center;border-radius:12px;font-size:15px}
+.xp-create-login-later{min-height:40px;border:0;background:transparent;color:var(--muted-foreground);font-size:14px;cursor:pointer;border-radius:10px}
+.xp-create-login-later:hover{background:var(--secondary);color:var(--foreground)}
+.xp-create-login-prompt button:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+@media(max-width:700px){.xp-app .xp-modal.xp-create-login-prompt{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:calc(100vw - 32px);max-width:420px;padding:32px 24px 20px;border-radius:24px}.xp-modal.xp-create-login-prompt>h2{font-size:25px}}

@@ -1139,14 +1139,19 @@ export function CreatePropertyPage({ id }: { id?: string }) {
     >
       <Dialog.Portal>
         <Dialog.Overlay className="xp-modal-overlay" />
-        <Dialog.Content className="xp-modal">
-          <KeyRound size={32} aria-hidden="true" />
-          <Dialog.Title>Login to create a property</Dialog.Title>
+        <Dialog.Content className="xp-modal xp-create-login-prompt">
+          <Dialog.Close className="xp-create-login-close" aria-label="Close login prompt">
+            <X size={20} />
+          </Dialog.Close>
+          <div className="xp-create-login-icon">
+            <KeyRound size={28} aria-hidden="true" />
+          </div>
+          <span className="xp-create-login-eyebrow">YOUR PROPERTY JOURNEY</span>
+          <Dialog.Title>Let's get your property listed</Dialog.Title>
           <Dialog.Description>
-            Please log in to add photos, save your listing, and publish your property.
+            Log in to add your photos, save your progress, and connect with interested buyers.
           </Dialog.Description>
-          <div className="xp-actions">
-            <Dialog.Close className="xp-button secondary">Cancel</Dialog.Close>
+          <div className="xp-create-login-actions">
             <button
               type="button"
               className="xp-button"
@@ -1155,8 +1160,9 @@ export function CreatePropertyPage({ id }: { id?: string }) {
                 app.requireLogin();
               }}
             >
-              Login <ArrowRight size={16} />
+              Login to continue <ArrowRight size={18} />
             </button>
+            <Dialog.Close className="xp-create-login-later">Maybe later</Dialog.Close>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

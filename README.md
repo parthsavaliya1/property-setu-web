@@ -28,6 +28,27 @@ npm run dev
 - React
 - Tailwind CSS
 
+## VPS deployment
+
+`npm run build` explicitly targets Nitro's Node server preset for the PM2/Nginx
+deployment. The Lovable configuration otherwise defaults to Cloudflare output,
+which does not open an HTTP port when started with Node and causes Nginx 502s.
+Use `npm run build:cloudflare` only for Cloudflare hosting.
+
+On the VPS, update with just:
+
+```sh
+git pull --ff-only
+npm run build
+```
+
+After a successful Node build, npm's `postbuild` script restarts the matching
+`property-setu-web` PM2 app with port 3005 and checks its HTTP response. It skips
+restarting on local/Lovable builds without a matching PM2 app in this checkout.
+A failed build does not run the restart. A failed restart or health check exits
+with an error so the deployment failure is visible.
+
+
 ## Property explorer
 
 The original marketing homepage remains at `/`. Use **Explore properties** in its desktop navigation or mobile menu to open `/explore`.

@@ -3,10 +3,9 @@ import { AnimatedLoader } from "@/components/ui/animated-loader";
 import { listingPayment } from "@/lib/listing-payment";
 import { useWalletTopUp } from "./wallet-funding";
 import * as Dialog from "@radix-ui/react-dialog";
-import { LoginPage } from "./auth";
 import { MobilePageHeader } from "./mobile";
 import { useMobileLayout } from "./use-mobile-layout";
-import { useEffect, useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { useEffect, useState, type FormEvent, type MouseEvent, type InputHTMLAttributes } from "react";
 import { Fragment } from "react/jsx-runtime";
 import {
   Tag,
@@ -225,6 +224,12 @@ export function CreatePropertyPage({ id }: { id?: string }) {
       return;
     }
     action.run(work);
+  }
+  function requireUploadSession(event: MouseEvent<HTMLInputElement>) {
+    if (!app.token) {
+      event.preventDefault();
+      setLoginOpen(true);
+    }
   }
   const mobile = useMobileLayout();
   const [desktopStep, setDesktopStep] = useState(0);
@@ -556,7 +561,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
             <input
               type="file"
               accept="image/*"
-              disabled={action.busy || !app.token}
+              disabled={action.busy}
+              onClick={requireUploadSession}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (file)
@@ -811,7 +817,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
           type="file"
           accept="image/*"
           multiple={true}
-          disabled={action.busy || !app.token}
+          disabled={action.busy}
+          onClick={requireUploadSession}
           onChange={(event) => {
             const files = Array.from(event.target.files || []);
             action.run(async () => {
@@ -859,7 +866,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
         <input
           type="file"
           accept="video/*"
-          disabled={action.busy || !app.token}
+          disabled={action.busy}
+          onClick={requireUploadSession}
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (file) action.run(async () => setVideo(await uploadFile(file, app.token!, "video")));
@@ -899,7 +907,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
         <input
           type="file"
           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-          disabled={action.busy || !app.token}
+          disabled={action.busy}
+          onClick={requireUploadSession}
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (file)
@@ -1120,6 +1129,41 @@ export function CreatePropertyPage({ id }: { id?: string }) {
       </Field>
     </>
   );
+  const loginPrompt = (
+    <Dialog.Root
+      open={!app.token || loginOpen}
+      onOpenChange={(open) => {
+        setLoginOpen(open);
+        if (!open && !app.token) app.go("home");
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="xp-modal-overlay" />
+        <Dialog.Content className="xp-modal">
+          <KeyRound size={32} aria-hidden="true" />
+          <Dialog.Title>Login to create a property</Dialog.Title>
+          <Dialog.Description>
+            Please log in to add photos, save your listing, and publish your property.
+          </Dialog.Description>
+          <div className="xp-actions">
+            <Dialog.Close className="xp-button secondary">Cancel</Dialog.Close>
+            <button
+              type="button"
+              className="xp-button"
+              onClick={() => {
+                setLoginOpen(false);
+                app.requireLogin();
+              }}
+            >
+              Login <ArrowRight size={16} />
+            </button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+  if (!app.ready) return <AnimatedLoader />;
+  if (!app.token) return <div className="xp-page xp-create-page">{loginPrompt}</div>;
   return (
     <div className="xp-page xp-create-page">
       <MobilePageHeader
@@ -1150,19 +1194,6 @@ export function CreatePropertyPage({ id }: { id?: string }) {
           </ExploreLink>
         }
       />
-      {!app.token && (
-        <div className="xp-notice xp-guest-create">
-          <div>
-            <strong>{"Start your property listing"}</strong>
-            <p>
-              {"You can fill in the details now. Sign in here to upload photos, save, and publish."}
-            </p>
-          </div>
-          <button className="xp-button" onClick={() => setLoginOpen(true)}>
-            {"Sign in to continue"}
-          </button>
-        </div>
-      )}
       <RemoteState loading={existing.loading} error={existing.error} retry={existing.reload}>
         {!owned ? (
           <div className="xp-error">{"You can only edit properties you own."}</div>
@@ -1361,7 +1392,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
                               type="file"
                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                               aria-label={`Upload ${label}`}
-                              disabled={action.busy || !app.token}
+                              disabled={action.busy}
+                              onClick={requireUploadSession}
                               onChange={(event) => {
                                 const file = event.target.files?.[0];
                                 if (file)
@@ -1452,24 +1484,7 @@ export function CreatePropertyPage({ id }: { id?: string }) {
           </div>
         )}
       </RemoteState>
-      <Dialog.Root open={loginOpen} onOpenChange={setLoginOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="xp-modal-overlay" />
-          <Dialog.Content className="xp-modal xp-listing-login" aria-describedby={undefined}>
-            <Dialog.Title className="sr-only">Sign in to continue your listing</Dialog.Title>
-            <Dialog.Close className="xp-login-close" aria-label="Close sign in">
-              <X size={20} />
-            </Dialog.Close>
-            <LoginPage
-              onSuccess={() => {
-                setLoginOpen(false);
-                action.setError("");
-                app.notify("Signed in. Your property details are still here.");
-              }}
-            />
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      {loginPrompt}
     </div>
   );
 }

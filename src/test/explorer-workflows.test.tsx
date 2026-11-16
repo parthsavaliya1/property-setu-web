@@ -709,6 +709,15 @@ describe("App loading behaviour", () => {
 
 describe("App monthly listing rules", () => {
   const settings = { standardPrice: 100, premiumPrice: 200, yearlyDiscountPercent: 20 };
+  it("blocks paid publishing when the selected plan has no valid charge", () => {
+    for (const invalid of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      for (const term of ["month", "year"] as const) {
+        expect(listingPayment({ ...settings, standardPrice: invalid }, "standard", term, null, false).due).toBeNull();
+        expect(listingPayment({ ...settings, premiumPrice: invalid }, "premium", term, null, false).due).toBeNull();
+      }
+    }
+    expect(listingPayment({ ...settings, yearlyDiscountPercent: Number.NaN }, "standard", "year", null, false).due).toBeNull();
+  });
   const monthly = {
     status: "published",
     expires_at: "2099-01-01",

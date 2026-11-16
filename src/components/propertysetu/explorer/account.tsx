@@ -85,7 +85,7 @@ export function WalletPage({ historyOnly = false }: { historyOnly?: boolean }) {
               <Wallet size={26} />
             </span>
             <span>AVAILABLE BALANCE</span>
-            <RemoteState {...wallet}>
+            <RemoteState {...wallet} compact>
               {wallet.data && <h2>{formatAmount(wallet.data.balance)}</h2>}
             </RemoteState>
             <p>Use your balance to publish and upgrade property listings.</p>
@@ -144,7 +144,7 @@ export function WalletPage({ historyOnly = false }: { historyOnly?: boolean }) {
                 </p>
               )}
               <ActionError error={action.error} />
-              <button className="xp-button full" disabled={action.busy}>
+              <button className="xp-button full" disabled={action.busy || (!pending && (wallet.loading || Boolean(wallet.error) || !wallet.data))}>
                 {action.busy ? (
                   <>
                     <AnimatedLoader size="small" color="currentColor" />
@@ -180,6 +180,7 @@ export function WalletPage({ historyOnly = false }: { historyOnly?: boolean }) {
         </div>
         <RemoteState
           {...history}
+          compact
           empty={history.data?.length === 0}
           emptyText="No transactions yet"
         >

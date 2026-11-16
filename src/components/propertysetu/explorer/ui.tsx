@@ -377,6 +377,7 @@ export function RemoteState({
   retry,
   children,
   emptyText = "Nothing here yet.",
+  compact = false,
 }: {
   loading: boolean;
   error: string;
@@ -384,13 +385,14 @@ export function RemoteState({
   retry: () => void;
   children?: ReactNode;
   emptyText?: string;
+  compact?: boolean;
 }) {
-  if (loading) return <AnimatedLoader fullScreen />;
+  if (loading) return <AnimatedLoader fullScreen={!compact} />;
   if (error)
     return (
-      <div className="home-empty" role="alert">
+      <div className={compact ? "xp-inline-state" : "home-empty"} role="alert">
         <Building2 />
-        <h2>Unable to load this page</h2>
+        {compact ? <strong>Unable to load this information</strong> : <h2>Unable to load this page</h2>}
         <p>{error}</p>
         <button className="xp-button" onClick={retry}>
           Try again
@@ -399,9 +401,9 @@ export function RemoteState({
     );
   if (empty)
     return (
-      <div className="home-empty">
+      <div className={compact ? "xp-inline-state" : "home-empty"}>
         <Building2 />
-        <h2>{emptyText}</h2>
+        {compact ? <strong>{emptyText}</strong> : <h2>{emptyText}</h2>}
         <p>New activity will appear here.</p>
       </div>
     );

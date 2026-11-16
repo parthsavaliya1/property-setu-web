@@ -878,3 +878,28 @@ button.faq-trigger:hover { background:var(--secondary); }
 .xp-create-login-later:hover{background:var(--secondary);color:var(--foreground)}
 .xp-create-login-prompt button:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
 @media(max-width:700px){.xp-app .xp-modal.xp-create-login-prompt{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:calc(100vw - 32px);max-width:420px;padding:32px 24px 20px;border-radius:24px}.xp-modal.xp-create-login-prompt>h2{font-size:25px}}
+
+/* Embedded wallet states must not inherit the full-page empty layout. */
+.xp-inline-state{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 16px;text-align:center;border:1px dashed var(--border);border-radius:12px;color:var(--foreground);background:var(--card)}
+.xp-inline-state>svg{width:24px;height:24px;color:var(--primary)}
+.xp-inline-state>strong{font-size:15px;line-height:1.4}
+.xp-inline-state>p{margin:0;font-size:13px;line-height:1.5;color:var(--muted-foreground)}
+.xp-inline-state>.xp-button{min-height:36px;padding:8px 14px;font-size:13px}
+.xp-wallet-balance>.xp-inline-state{margin-top:12px;width:100%}
+@media(min-width:701px){
+ .xp-wallet-page{max-width:1120px;margin-inline:auto}
+ .xp-wallet-layout{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:start;gap:20px}
+ .xp-wallet-layout>.xp-wallet-balance{min-height:0;padding:24px;border-radius:18px}
+ .xp-wallet-layout>.xp-panel{padding:24px;border-radius:18px}
+ .xp-wallet-icon{width:44px;height:44px;margin-bottom:18px}
+ .xp-wallet-balance>p{font-size:14px;line-height:1.5}
+ .xp-wallet-balance h2{font-size:36px}
+ .xp-wallet-page .xp-panel>h2{font-size:21px}
+ .xp-wallet-recent{padding:24px}
+ .xp-owned-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),360px));gap:20px;align-items:start}
+ .xp-owned-grid>.xp-owned{padding:14px;border-radius:16px;margin-bottom:0}
+ .xp-owned-grid>.xp-owned>a>img{height:190px;aspect-ratio:auto;object-fit:cover;border-radius:10px}
+ .xp-owned-grid>.xp-owned h2{font-size:19px}
+ .xp-stats>div{padding:18px 20px}
+ .xp-stats strong{font-size:26px}
+}

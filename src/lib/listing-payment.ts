@@ -35,6 +35,14 @@ export function listingPayment(
     !(term === "year" && savedTerm !== "year")
   )
     due = 0;
-  else if (settings) due = planCharge(settings, badge, term, trial ? null : current);
+  else if (settings) {
+    const monthlyPrice = badge === "premium" ? settings.premiumPrice : settings.standardPrice;
+    const validPrice = Number.isFinite(monthlyPrice) && monthlyPrice > 0;
+    const validDiscount = term !== "year" || Number.isFinite(settings.yearlyDiscountPercent);
+    if (validPrice && validDiscount) {
+      const charge = planCharge(settings, badge, term, trial ? null : current);
+      if (Number.isFinite(charge) && charge > 0) due = charge;
+    }
+  }
   return { badge, term, live: Boolean(live), useFree, due };
 }

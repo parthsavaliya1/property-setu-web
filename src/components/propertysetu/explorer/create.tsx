@@ -438,16 +438,20 @@ export function CreatePropertyPage({ id }: { id?: string }) {
         "Listing pricing or free-listing eligibility changed. Review the updated charge before continuing.",
       );
     }
+    if (!quote.useFree && (quote.due === null || !Number.isFinite(quote.due) || quote.due <= 0))
+      throw new Error("A valid monthly or yearly listing charge is required. Please reload listing prices.");
     if (quote.useFree)
       await productRequest(`/properties/${savedProperty.id}/publish-free`, app.token, "POST");
     else if (quote.due !== null && quote.due > 0) {
       let balance = Number(
         (await productRequest<{ balance: number }>("/wallet", app.token)).balance,
       );
+      if (!Number.isFinite(balance) || balance < 0)
+        throw new Error("Could not verify your wallet balance. Please retry before publishing.");
       if (balance < quote.due) {
         balance = (await funding.topUp(Math.max(1, Math.ceil(quote.due - balance)))).balance;
         wallet.reload();
-        if (balance < quote.due)
+        if (!Number.isFinite(balance) || balance < quote.due)
           throw new Error(
             `Your previous payment is verified. Add ${formatAmount(quote.due - balance)} to finish publishing.`,
           );

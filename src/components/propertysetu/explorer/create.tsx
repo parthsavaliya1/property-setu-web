@@ -27,6 +27,7 @@ import {
 import { displayPrice } from "@/lib/propertysetu";
 import {
   formatAmount,
+  planCharge,
   productRequest,
   readable,
   uploadFile,
@@ -460,6 +461,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
         property_id: savedProperty.id,
         listing_badge: quote.badge,
         term: quote.term,
+        pricing_channel: "website",
+        expected_charge: quote.due,
       });
     }
     app.changed();
@@ -969,15 +972,14 @@ export function CreatePropertyPage({ id }: { id?: string }) {
               >
                 <strong>{value === "premium" ? "Premium" : "Regular"}</strong>
                 <span>
-                  {settings.data
-                    ? displayPrice(
-                        value === "premium"
-                          ? settings.data.premiumPrice
-                          : settings.data.standardPrice,
-                      )
-                    : "—"}{" "}
+                  {settings.data && (settings.data.websiteOfferPercent ?? 0) > 0 && <>
+                    <del>{displayPrice(value === "premium" ? settings.data.premiumPrice : settings.data.standardPrice)}</del>{" "}
+                  </>}
+                  {settings.data ? displayPrice(planCharge(settings.data, value as "standard" | "premium", "month")) : "—"}{" "}
                   {"/ month"}
                 </span>
+                {settings.data && (settings.data.websiteOfferPercent ?? 0) > 0 &&
+                  <small className="xp-success">{settings.data.websiteOfferPercent}% off · Website offer</small>}
                 <small>
                   {value === "premium"
                     ? "Featured in premium properties"
@@ -1044,8 +1046,17 @@ export function CreatePropertyPage({ id }: { id?: string }) {
       <div className="xp-price-summary">
         <div>
           <span>{"Listing charge"}</span>
-          <strong>{free ? "Free" : due !== null ? formatAmount(due) : "Prices unavailable"}</strong>
+          <strong>
+            {due !== null && due > 0 && payment.originalDue !== null && payment.originalDue > due && <>
+              <del className="text-muted-foreground">{formatAmount(payment.originalDue)}</del>{" "}
+            </>}
+            {free ? "Free" : due !== null ? formatAmount(due) : "Prices unavailable"}
+          </strong>
         </div>
+        {due !== null && due > 0 && payment.originalDue !== null && payment.originalDue > due && <div className="xp-success">
+          <span>{settings.data?.websiteOfferPercent}% off · Website offer</span>
+          <strong>You save {formatAmount(payment.originalDue - due)}</strong>
+        </div>}
         <div>
           <span>{"Wallet balance"}</span>
           <strong>

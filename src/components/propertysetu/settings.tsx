@@ -11,6 +11,7 @@ type ListingSettings = {
   premiumOfferPercent: number;
   premiumSavings: number;
   yearlyDiscountPercent: number;
+  websiteOfferPercent?: number;
 };
 
 type DemoUser = {
@@ -33,6 +34,7 @@ export function Settings() {
   const [premium, setPremium] = useState('30');
   const [offer, setOffer] = useState('0');
   const [yearly, setYearly] = useState('15');
+  const [websiteOffer, setWebsiteOffer] = useState('0');
   const [users, setUsers] = useState<DemoUser[]>([]);
   const [name, setName] = useState('Demo user');
   const [phone, setPhone] = useState('');
@@ -67,6 +69,7 @@ export function Settings() {
       setPremium(String(prices.premiumListPrice));
       setOffer(String(prices.premiumOfferPercent));
       setYearly(String(prices.yearlyDiscountPercent));
+      setWebsiteOffer(String(prices.websiteOfferPercent ?? 0));
       setUsers(Array.isArray(demos) ? demos : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load settings.');
@@ -84,8 +87,13 @@ export function Settings() {
     const premiumPrice = Number(premium);
     const premiumOffer = Number(offer);
     const yearlyDiscount = Number(yearly);
-    if (![standardPrice, premiumPrice, premiumOffer, yearlyDiscount].every((value) => Number.isInteger(value) && value >= 0)) {
+    const websiteDiscount = Number(websiteOffer);
+    if (![standardPrice, premiumPrice, premiumOffer, yearlyDiscount, websiteDiscount].every((value) => Number.isInteger(value) && value >= 0)) {
       setError('Enter whole rupee amounts and whole percents.');
+      return;
+    }
+    if ([premiumOffer, yearlyDiscount, websiteDiscount].some((value) => value > 90) || standardPrice > 100000 || premiumPrice > 100000) {
+      setError('Discounts must be between 0 and 90%. Listing amounts cannot exceed ₹100,000.');
       return;
     }
     setBusy('prices');
@@ -99,10 +107,11 @@ export function Settings() {
           premium_price: premiumPrice,
           premium_offer_percent: premiumOffer,
           yearly_discount_percent: yearlyDiscount,
+          website_offer_percent: websiteDiscount,
         }),
       });
       setSettings(saved);
-      setNotice('Listing prices saved. The app uses these amounts on the next open.');
+      setNotice('Listing prices saved. The website offer applies when customers next load listing prices.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save prices.');
     } finally {
@@ -183,11 +192,21 @@ export function Settings() {
           <div className="field"><label htmlFor="premium-price">Premium amount (₹ / month)</label><input id="premium-price" inputMode="numeric" required value={premium} onChange={(event) => setPremium(event.target.value.replace(/\D/g, '').slice(0, 6))} /></div>
           <div className="field"><label htmlFor="premium-offer">Premium offer (%)</label><input id="premium-offer" inputMode="numeric" required value={offer} onChange={(event) => setOffer(event.target.value.replace(/\D/g, '').slice(0, 2))} /><span className="text-xs text-muted-foreground">0 turns the offer off. 20 means 20% off.</span></div>
           <div className="field"><label htmlFor="yearly-offer">Yearly discount (%)</label><input id="yearly-offer" inputMode="numeric" required value={yearly} onChange={(event) => setYearly(event.target.value.replace(/\D/g, '').slice(0, 2))} /></div>
+          <div className="field"><label htmlFor="website-offer">Website offer (%)</label><input id="website-offer" inputMode="numeric" required value={websiteOffer} onChange={(event) => setWebsiteOffer(event.target.value.replace(/\D/g, '').slice(0, 2))} /><span className="text-xs text-muted-foreground">0 turns it off. Applies to regular and premium website listings, after existing premium and yearly discounts. Mobile app prices stay the same.</span></div>
         </div>
         <div className="settings-preview">
           {offerAmount > 0
             ? <>Premium shows <strong>{offerAmount}% off</strong>. Customers pay {money(charged)} instead of {money(premiumAmount || 0)} and save {money(savings)}. A year is {money(yearPay)}.</>
             : <>No premium offer. Customers pay {money(premiumAmount || 0)} for one premium month. A year is {money(yearPay)}.</>}
+        </div>
+        <div className="settings-preview" aria-live="polite">
+          Website regular monthly price:{' '}
+          {Number(websiteOffer) > 0 && <><del>{money(Number(standard) || 0)}</del>{' '}</>}
+          <strong>{money(Math.round((Number(standard) || 0) * (100 - Number(websiteOffer)) / 100))}</strong>
+          {Number(websiteOffer) > 0 && <> · {websiteOffer}% off</>}
+          <br />Website premium monthly price:{' '}
+          {Number(websiteOffer) > 0 && <><del>{money(charged)}</del>{' '}</>}
+          <strong>{money(Math.round(charged * (100 - Number(websiteOffer)) / 100))}</strong>
         </div>
         <Button disabled={busy === 'prices'}>{busy === 'prices' ? 'Saving…' : 'Save amounts'}</Button>
       </form>

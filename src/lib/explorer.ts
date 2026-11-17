@@ -101,6 +101,7 @@ export type ListingSettings = {
   standardPrice: number;
   premiumPrice: number;
   yearlyDiscountPercent: number;
+  websiteOfferPercent?: number;
 };
 export function planCharge(
   settings: ListingSettings,
@@ -113,7 +114,7 @@ export function planCharge(
     listing_term?: string | null;
   } | null,
 ) {
-  const fee = (b: "standard" | "premium", t: "month" | "year") =>
+  const originalFee = (b: "standard" | "premium", t: "month" | "year") =>
     t === "month"
       ? b === "premium"
         ? settings.premiumPrice
@@ -124,6 +125,11 @@ export function planCharge(
             (100 - Math.min(90, Math.max(0, settings.yearlyDiscountPercent)))) /
             100,
         );
+  const offer = settings.websiteOfferPercent ?? 0;
+  const fee = (b: "standard" | "premium", t: "month" | "year") =>
+    Number.isInteger(offer) && offer >= 0 && offer <= 90
+      ? Math.round(originalFee(b, t) * (100 - offer) / 100)
+      : Number.NaN;
   const live =
     current?.status === "published" &&
     current.listing_term !== "trial" &&

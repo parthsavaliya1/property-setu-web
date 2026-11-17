@@ -870,6 +870,26 @@ describe("Publishing parity with the app", () => {
       expect(navigate).toHaveBeenLastCalledWith({ view: "my-properties" });
     },
   );
+  it("shows crossed-out website pricing and submits the discounted server quote", async () => {
+    const expired = listingRecord({ status: "expired", expires_at: "2000-01-01" });
+    request.mockImplementation(async (path, options) => {
+      if (path === "/api/listing-settings") return { standardPrice: 80, premiumPrice: 100, yearlyDiscountPercent: 20, websiteOfferPercent: 50 };
+      if (path === "/api/properties/listing-one") return options?.method === "PATCH" ? { ...expired, status: "draft" } : expired;
+      if (path === "/api/wallet") return { balance: 1000 };
+      if (path === "/api/wallet/spend") return { ok: true, charged: 40, balance: 960 };
+      return response(path, options);
+    });
+    await mount(<CreatePropertyPage id="listing-one" />, { view: "create", id: "listing-one" });
+    await reviewExistingListing();
+    const summary = container.querySelector(".xp-price-summary")!;
+    expect(summary.querySelector("del")?.textContent).toBe("₹80");
+    expect(summary.textContent).toContain("₹40");
+    expect(summary.textContent).toContain("50% off");
+    await submit();
+    const spend = request.mock.calls.find(([path]) => path === "/api/wallet/spend");
+    expect(JSON.parse(String(spend?.[1]?.body))).toMatchObject({ pricing_channel: "website", expected_charge: 40 });
+    expect(request.mock.calls.some(([path]) => path === "/api/wallet/order")).toBe(false);
+  });
   it("renews an expired monthly listing through the same wallet endpoint and monthly term", async () => {
     const expired = listingRecord({ status: "expired", expires_at: "2000-01-01" });
     request.mockImplementation(async (path, options) => {
@@ -887,6 +907,8 @@ describe("Publishing parity with the app", () => {
       property_id: "listing-one",
       listing_badge: "standard",
       term: "month",
+      pricing_channel: "website",
+      expected_charge: 100,
     });
     expect(request.mock.calls.some(([path]) => path === "/api/wallet/order")).toBe(false);
   });

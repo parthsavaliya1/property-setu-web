@@ -44,5 +44,8 @@ export function listingPayment(
       if (Number.isFinite(charge) && charge > 0) due = charge;
     }
   }
-  return { badge, term, live: Boolean(live), useFree, due };
+  const originalDue = settings && due !== null && due > 0
+    ? planCharge({ ...settings, websiteOfferPercent: 0 }, badge, term, trial ? null : current)
+    : due;
+  return { badge, term, live: Boolean(live), useFree, due, originalDue };
 }

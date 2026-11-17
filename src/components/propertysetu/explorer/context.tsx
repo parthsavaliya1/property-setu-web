@@ -3,6 +3,7 @@ import { ExplorerContext, type ExplorerContextValue, type ProductSession } from 
 export type { ProductSession } from "./session-store";
 import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { ApiError } from "@/lib/propertysetu";
+import { syncRecentSearches } from "@/lib/recent-searches";
 import {
   productRequest,
   type ExplorerLocation,
@@ -57,6 +58,9 @@ export function ExplorerProvider({
   useEffect(() => {
     void refreshMe();
   }, [session?.token, refresh]);
+  useEffect(() => {
+    if (session?.token) void syncRecentSearches(session.token);
+  }, [session?.token]);
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => setMessage(""), 6000);

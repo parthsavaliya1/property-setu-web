@@ -1098,7 +1098,7 @@ export function SavedSearchesPage() {
       <RemoteState
         {...list}
         empty={list.data?.length === 0}
-        emptyText="Save a search while exploring"
+        emptyText="Your searches are saved automatically when you explore"
       >
         <div className="xp-list">
           {list.data?.map((item) => (
@@ -1121,7 +1121,9 @@ export function SavedSearchesPage() {
                     ...(item.q ? { q: item.q } : {}),
                     ...(item.city ? { city: item.city } : {}),
                     ...(item.listing_type ? { listing_type: item.listing_type } : {}),
-                    ...(item.category_id ? { category: item.category_id } : {}),
+                    ...(item.category_slug || item.category_id
+                      ? { category: item.category_slug || item.category_id! }
+                      : {}),
                     ...(item.max_price ? { max_price: String(item.max_price) } : {}),
                     ...(item.min_price ? { min_price: String(item.min_price) } : {}),
                     ...(item.bedrooms ? { bedrooms: String(item.bedrooms) } : {}),

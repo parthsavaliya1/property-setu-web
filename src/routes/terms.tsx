@@ -4,7 +4,7 @@ import { metadata, SUPPORT_EMAIL } from '@/lib/propertysetu';
 import { termsSections } from '@/lib/termsContent';
 
 export const Route = createFileRoute('/terms')({
-  head: () => metadata('Terms and community rules', 'Rules for property listings, conversations and safe use of PropertySetu.'),
+  head: () => metadata('Terms and community rules', 'Rules for property listings, conversations and safe use of PropertySetu.', '/terms'),
   component: TermsPage,
 });
 

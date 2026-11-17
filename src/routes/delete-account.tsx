@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { api, metadata, SUPPORT_EMAIL } from '@/lib/propertysetu';
 
 export const Route = createFileRoute('/delete-account')({
-  head: () => metadata('Delete account', 'Verify your mobile number and permanently delete your PropertySetu account without installing the app.'),
+  head: () => metadata('Delete account', 'Verify your mobile number and permanently delete your PropertySetu account without installing the app.', '/delete-account'),
   component: DeleteAccountPage,
 });
 

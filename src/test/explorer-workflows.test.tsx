@@ -5,6 +5,7 @@ import { AboutPage } from "@/components/propertysetu/explorer/about";
 import { AnimatedLoader } from "@/components/ui/animated-loader";
 import { listingPayment } from "@/lib/listing-payment";
 import { AppChrome } from "@/components/propertysetu/explorer/ui";
+import { PropertyHome } from "@/components/propertysetu/property-home";
 import { ExplorerApp } from "@/components/propertysetu/explorer/app";
 import { SiteHeader, OpenApp } from "@/components/propertysetu/site";
 import { Journey, WaysToLive } from "@/components/propertysetu/discover";
@@ -552,6 +553,93 @@ describe("Website-only entry points", () => {
         .filter((link) => link.getAttribute("href")?.startsWith("/explore"))
         .every((link) => !link.getAttribute("target")),
     ).toBe(true);
+  });
+});
+
+describe("desktop property filters", () => {
+  const latestFilters = () => {
+    const calls = request.mock.calls.filter(([path]) => path.startsWith("/api/properties?"));
+    return new URLSearchParams(calls.at(-1)![0].split("?")[1]);
+  };
+  async function selectFilter(label: string, value: string) {
+    const field = Array.from(container.querySelectorAll("label"))
+      .find((item) => item.textContent?.trim().startsWith(label))!;
+    const select = field.querySelector("select")!;
+    await act(async () => {
+      select.value = value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
+  it("combines search, category, city, budget and bedrooms without conflicting listing types", async () => {
+    request.mockImplementation(async (path, options) => {
+      if (path.startsWith("/api/properties?")) {
+        const params = new URLSearchParams(path.split("?")[1]);
+        return params.get("listing_type") === "rent" && params.get("category") === "villa"
+          ? [listingRecord({ title: "Matching rental villa", listing_type: "rent" })] : [];
+      }
+      return response(path, options);
+    });
+    await mount(<PropertyHome />, { view: "home" });
+    expect(container.textContent).not.toContain("Map view");
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Property filters"]')!.click());
+    await selectFilter("Listing type", "sale");
+    await click("Rent");
+    await click("Villa");
+    expect(latestFilters().get("listing_type")).toBe("rent");
+    expect(latestFilters().get("category")).toBe("villa");
+    expect(container.textContent).toContain("Matching rental villa");
+    await fill('.xp-home-extra-filters input[placeholder="Any city"]', " Rajkot ");
+    await fill('.xp-home-extra-filters input[type="number"]', "1000000");
+    await selectFilter("Bedrooms", "3");
+    await act(async () => {
+      const budget = container.querySelector<HTMLSelectElement>("#home-budget")!;
+      budget.value = "5000000";
+      budget.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await fill('input[aria-label="Search properties"]', "garden");
+    await submit();
+    expect(Object.fromEntries(latestFilters())).toMatchObject({
+      q: "garden", city: "Rajkot", min_price: "1000000", max_price: "5000000",
+      bedrooms: "3", listing_type: "rent", category: "villa",
+    });
+    await selectFilter("Listing type", "sale");
+    expect(container.querySelector('button.home-category[aria-pressed="true"]')?.textContent).toContain("Buy");
+    expect(latestFilters().get("listing_type")).toBe("sale");
+    expect(container.textContent).not.toContain("Matching rental villa");
+  });
+
+  it("clears every filter restored from a search link, including its category", async () => {
+    await mount(<PropertyHome />, {
+      view: "search", q: "garden", category: "house", city: "Rajkot",
+      listing_type: "sale", min_price: "1000000", max_price: "5000000", bedrooms: "3",
+    });
+    expect(latestFilters().get("category")).toBe("house");
+    await click("Clear filters");
+    expect(Object.fromEntries(latestFilters())).toEqual({ limit: "50" });
+    expect(container.querySelector('button.home-category[aria-pressed="true"]')).toBeNull();
+  });
+});
+
+describe("automatic website searches", () => {
+  it("saves on Search without a manual save button or login prompt", async () => {
+    vi.useFakeTimers();
+    try {
+      await mount(<PropertyHome />, { view: "home" });
+      expect(container.textContent).not.toContain("Save search");
+      await fill('input[aria-label="Search properties"]', "Rajkot");
+      await act(async () => vi.advanceTimersByTimeAsync(701));
+      expect(request.mock.calls.filter(([path]) => path === "/api/saved-searches")).toHaveLength(0);
+      await submit();
+      await act(async () => vi.advanceTimersByTimeAsync(701));
+      const saves = request.mock.calls.filter(([path]) => path === "/api/saved-searches");
+      expect(saves).toHaveLength(1);
+      expect(JSON.parse(saves[0]![1]!.body as string)).toMatchObject({ name: "Rajkot", q: "Rajkot" });
+      expect(saves[0]![2]).toBe(session.token);
+      expect(navigate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

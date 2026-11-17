@@ -21,7 +21,7 @@ export function displayPrice(value: number | string | null | undefined) {
  return money(amount);
 }
 export function label(value: string) { return value.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }
-export function metadata(title: string, description: string) { return { meta: [{ title: `${title} — PropertySetu` }, { name:'description', content:description }, { property:'og:title', content:`${title} — PropertySetu` }, { property:'og:description', content:description }, { property:'og:type', content:'website' }, { name:'twitter:card', content:'summary_large_image' }] }; }
+export { metadata } from './seo';
 export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
 export async function api<T>(path: string, options: RequestInit = {}, token?: string, timeoutMs = 20000): Promise<T> {
  const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), timeoutMs);

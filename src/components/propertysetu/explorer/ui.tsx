@@ -115,6 +115,8 @@ export function MenuItems({ onClose }: { onClose?: () => void }) {
 }
 export function AccountMenu() {
   const app = useProduct();
+  const name = app.me?.profile?.full_name?.trim() || "";
+  const initial = Array.from(name)[0]?.toLocaleUpperCase();
   const [open, setOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const accountViews: ExplorerView[] = [
@@ -139,12 +141,12 @@ export function AccountMenu() {
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button type="button" className="xp-account-trigger" aria-label="My account">
-            {app.me?.profile?.avatar_url ? (
-              <img src={app.me.profile.avatar_url} alt="" />
+            {app.token && initial ? (
+              <span className="xp-account-initial" aria-hidden="true">{initial}</span>
             ) : (
               <UserRound size={20} aria-hidden="true" />
             )}
-            <span>My account</span>
+            {!app.token && <span>My account</span>}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
         </DropdownMenuTrigger>
@@ -269,16 +271,6 @@ export function AppChrome({ children }: { children: ReactNode }) {
               <Plus size={17} />
               Post property
             </ExploreLink>
-            {!app.token && (
-              <ExploreLink
-                className="home-account xp-header-account"
-                view="login"
-                aria-label="Sign in"
-              >
-                <UserRound size={19} />
-                <span>Sign in</span>
-              </ExploreLink>
-            )}
             <AccountMenu />
           </div>
         </header>

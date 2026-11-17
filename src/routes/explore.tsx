@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ExplorerApp } from "@/components/propertysetu/explorer/app";
 import { parseExplorerSearch } from "@/lib/explorer";
-import { metadata } from "@/lib/propertysetu";
+import { explorerMetadata } from "@/lib/seo";
 export const Route = createFileRoute("/explore")({
   validateSearch: parseExplorerSearch,
-  head: () =>
-    metadata(
-      "Explore properties",
-      "Search properties, connect with owners, manage listings, and access your PropertySetu wallet.",
-    ),
+  head: ({ match }) => explorerMetadata(match.search),
   component: Page,
 });
 function Page() {

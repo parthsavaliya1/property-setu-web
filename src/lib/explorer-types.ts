@@ -267,6 +267,7 @@ export type SavedSearch = {
   city: string | null;
   locality: string | null;
   category_id: string | null;
+  category_slug?: string | null;
   listing_type: ListingType | null;
   min_price: string | null;
   max_price: string | null;

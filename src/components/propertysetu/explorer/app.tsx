@@ -102,7 +102,7 @@ export function ExplorerApp({
       <ExplorerLanguageProvider>
         <AppChrome>
           <div
-            key={`${location.view}:${location.id || ""}:${location.q || ""}:${location.city || ""}:${location.category || ""}`}
+            key={JSON.stringify(location)}
           >
             {content}
           </div>

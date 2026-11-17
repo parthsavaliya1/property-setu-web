@@ -20,8 +20,9 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { api } from "@/lib/propertysetu";
+import { api, money } from "@/lib/propertysetu";
 import { productRequest } from "@/lib/explorer";
+import { rememberSearch } from "@/lib/recent-searches";
 import type { PropertyCard as Property } from "@/lib/explorer-types";
 import { useExplorer, useAction, useResource } from "./explorer/context";
 import { ActionError, ConfirmAction, ExploreLink, ExplorerCard, MenuItems } from "./explorer/ui";
@@ -79,30 +80,45 @@ export function PropertyHome() {
   const [sort, setSort] = useState("recommended");
   const [listingType, setListingType] = useState(app?.location.listing_type || "");
   const [hasMore, setHasMore] = useState(false);
-  const [saveSearchOpen, setSaveSearchOpen] = useState(false);
-  const [searchName, setSearchName] = useState("");
   const queryKey = useRef("");
   const searchRef = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState(app?.location.q || "");
   const [search, setSearch] = useState(app?.location.q || "");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(app?.location.category || "");
   const [rows, setRows] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(() => Boolean(
+    app?.location.city || app?.location.category || app?.location.listing_type ||
+    app?.location.bedrooms || app?.location.min_price || app?.location.max_price,
+  ));
   const [budget, setBudget] = useState(app?.location.max_price || "");
-  const selected = categories.find((item) => item.name === category);
+
+  useEffect(() => {
+    if (!app?.ready) return;
+    const timer = setTimeout(() => {
+      void rememberSearch({
+        q: search,
+        city: city.trim(),
+        min_price: minPrice,
+        max_price: budget,
+        bedrooms: beds,
+        listing_type: listingType,
+        category,
+      }, app.token);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [search, city, minPrice, budget, beds, listingType, category, app?.ready, app?.token]);
 
   useEffect(() => {
     let active = true;
     const params = new URLSearchParams({ limit: "50" });
     if (search) params.set("q", search);
-    if (selected) params.set(selected.param, selected.value);
-    else if (app?.location.category) params.set("category", app.location.category);
+    if (category) params.set("category", category);
     if (budget) params.set("max_price", budget);
-    if (city) params.set("city", city);
+    if (city.trim()) params.set("city", city.trim());
     else if (preferredCity) params.set("prefer_city", preferredCity);
     if (minPrice) params.set("min_price", minPrice);
     if (beds) params.set("bedrooms", beds);
@@ -131,7 +147,7 @@ export function PropertyHome() {
     };
   }, [
     search,
-    selected,
+    category,
     budget,
     city,
     minPrice,
@@ -179,6 +195,15 @@ export function PropertyHome() {
   const premium = ordered.filter((row) => row.is_premium || row.listing_label === "Premium");
   const standard = ordered.filter((row) => !row.is_premium && row.listing_label !== "Premium");
   const filtered = Boolean(search || category || budget || city || minPrice || beds || listingType);
+  const activeFilters = [
+    search && `Search: ${search}`,
+    city && `City: ${city}`,
+    category && `Type: ${categories.find(item => item.value === category)?.name || category.replaceAll("-", " ")}`,
+    listingType && (listingType === "pg" ? "Paying guest (PG)" : `For ${listingType}`),
+    beds && `${beds}+ bedrooms`,
+    minPrice && `From ${money(Number(minPrice))}`,
+    budget && `Up to ${money(Number(budget))}`,
+  ].filter(Boolean);
   const appLink = (title: string, Icon: typeof House) => (
     <ExploreLink
       view={title === "Wallet" ? "wallet" : "notifications"}
@@ -238,10 +263,12 @@ export function PropertyHome() {
                 <p>{text("Find the right property for you")}</p>
               </div>
             </div>
-            <div className="home-utilities">
-              {appLink("Notifications", Bell)}
-              {appLink("Wallet", Wallet)}
-            </div>
+            {mobile && (
+              <div className="home-utilities">
+                {appLink("Notifications", Bell)}
+                {appLink("Wallet", Wallet)}
+              </div>
+            )}
           </div>
           <div className="home-intro">
             <span>FIND A PLACE TO CALL YOURS</span>
@@ -265,7 +292,11 @@ export function PropertyHome() {
                 app.location.view === "home" &&
                 window.matchMedia("(max-width: 700px)").matches
               ) {
-                app.search({ q: query.trim() });
+                app.search({
+                  q: query.trim(), city: city.trim(), category,
+                  listing_type: listingType, min_price: minPrice,
+                  max_price: budget, bedrooms: beds,
+                });
                 return;
               }
               setSearch(query.trim());
@@ -305,6 +336,9 @@ export function PropertyHome() {
               onChange={(event) => setBudget(event.target.value)}
             >
               <option value="">Any budget</option>
+              {budget && !["1000000", "5000000", "10000000", "20000000"].includes(budget) && (
+                <option value={budget}>{money(Number(budget))}</option>
+              )}
               <option value="1000000">₹10 lakh</option>
               <option value="5000000">₹50 lakh</option>
               <option value="10000000">₹1 crore</option>
@@ -332,7 +366,7 @@ export function PropertyHome() {
               />
             </label>
             <label>
-              Bedrooms
+              Minimum bedrooms
               <select value={beds} onChange={(e) => setBeds(e.target.value)}>
                 <option value="">Any</option>
                 {[1, 2, 3, 4, 5].map((value) => (
@@ -349,30 +383,28 @@ export function PropertyHome() {
                 ))}
               </select>
             </label>
+            <label>
+              Sort properties
+              <select
+                aria-label="Sort properties"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="recommended">Recommended</option>
+                <option value="low">Price: low to high</option>
+                <option value="high">Price: high to low</option>
+              </select>
+            </label>
           </div>
         )}
-        <div className="xp-browse-tools">
-          <ExploreLink view="map">
-            <MapPin size={15} />
-            Map view
-          </ExploreLink>
-          <button
-            onClick={() => {
-              if (app?.requireLogin()) setSaveSearchOpen(true);
-            }}
-          >
-            Save search
-          </button>
-          <select
-            aria-label="Sort properties"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="recommended">Recommended</option>
-            <option value="low">Price: low to high</option>
-            <option value="high">Price: high to low</option>
-          </select>
-        </div>
+        {mobile && (
+          <div className="xp-browse-tools">
+            <ExploreLink view="map">
+              <MapPin size={15} />
+              Map view
+            </ExploreLink>
+          </div>
+        )}
         <ActionError error={action.error} />
         <section className="home-categories" aria-label="Property categories">
           <div className="home-category-heading">
@@ -380,12 +412,14 @@ export function PropertyHome() {
             <span>A space for every plan</span>
           </div>
           <div className="home-category-grid">
-            {categories.map(({ name, icon }) => (
+            {categories.map(({ name, icon, param, value }) => (
               <button
                 key={name}
-                className={`home-category ${category === name ? "selected" : ""}`}
-                aria-pressed={category === name}
-                onClick={() => setCategory(category === name ? "" : name)}
+                className={`home-category ${(param === "listing_type" ? listingType : category) === value ? "selected" : ""}`}
+                aria-pressed={(param === "listing_type" ? listingType : category) === value}
+                onClick={() => param === "listing_type"
+                  ? setListingType(listingType === value ? "" : value)
+                  : setCategory(category === value ? "" : value)}
               >
                 <span className="home-category-icon">
                   <AppCategoryIcon name={icon} />
@@ -411,9 +445,17 @@ export function PropertyHome() {
         </a>
         <div id="home-listings" className="home-results" aria-live="polite" aria-busy={loading}>
           {filtered && (
+            <div className="home-applied-filters">
+              <span>Applied filters</span>
+              <ul aria-label="Applied property filters">
+                {activeFilters.map(filter => <li key={String(filter)}>{filter}</li>)}
+              </ul>
+            </div>
+          )}
+          {filtered && (
             <div className="home-result-summary">
               <span>
-                {search ? `Results for “${search}”` : category || "Properties within your budget"}
+                {search ? `Results for “${search}”` : categories.find((item) => item.value === category)?.name || "Filtered properties"}
                 {!loading && !error ? ` · ${rows.length} properties` : ""}
               </span>
               <button
@@ -623,59 +665,7 @@ export function PropertyHome() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-      <Dialog.Root open={saveSearchOpen} onOpenChange={setSaveSearchOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="xp-modal-overlay" />
-          <Dialog.Content className="xp-modal">
-            <Dialog.Title>Save this search</Dialog.Title>
-            <Dialog.Description>
-              We’ll notify you when matching properties are listed.
-            </Dialog.Description>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void action.run(async () => {
-                  await productRequest("/saved-searches", app?.token, "POST", {
-                    name: searchName,
-                    ...(search ? { q: search } : {}),
-                    ...(city ? { city } : {}),
-                    ...(budget ? { max_price: Number(budget) } : {}),
-                    ...(minPrice ? { min_price: Number(minPrice) } : {}),
-                    ...(beds ? { bedrooms: Number(beds) } : {}),
-                    ...(listingType
-                      ? { listing_type: listingType }
-                      : selected?.param === "listing_type"
-                        ? { listing_type: selected.value }
-                        : {}),
-                    ...(selected?.param === "category" ? { category_slug: selected.value } : {}),
-                  });
-                  setSaveSearchOpen(false);
-                  app?.notify("Search saved.");
-                });
-              }}
-            >
-              <label className="xp-field">
-                <span>Search name</span>
-                <input
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
-                  required
-                  maxLength={80}
-                />
-              </label>
-              <ActionError error={action.error} />
-              <div className="xp-actions">
-                <Dialog.Close className="xp-button secondary" type="button">
-                  Cancel
-                </Dialog.Close>
-                <button className="xp-button" disabled={action.busy}>
-                  Save search
-                </button>
-              </div>
-            </form>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+
     </div>
   );
 }

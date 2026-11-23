@@ -39,7 +39,7 @@ export function DetailsPage({ id }: { id: string }) {
   const closed = row && ["sold", "rented", "expired", "archived"].includes(row.status);
   const own = row?.owner_id === app.session?.user.id;
   const images = row?.images?.filter((image) => image.image_type !== "video") || [];
-  const video = row?.images?.find((image) => image.image_type === "video");
+  const videos = row?.images?.filter((image) => image.image_type === "video") || [];
   const photos = images.length
     ? images.map((image) => image.image_url)
     : row?.cover_image
@@ -251,9 +251,9 @@ export function DetailsPage({ id }: { id: string }) {
                       </>
                     ) : null}
                   </section>
-                  {video && (
-                    <section className="xp-panel">
-                      <h2>Property video</h2>
+                  {videos.map((video, index) => (
+                    <section className="xp-panel" key={video.id || `${video.image_url}-${index}`}>
+                      <h2>Property video {index + 1}</h2>
                       <video
                         controls
                         preload="metadata"
@@ -261,7 +261,7 @@ export function DetailsPage({ id }: { id: string }) {
                         className="xp-video"
                       />
                     </section>
-                  )}
+                  ))}
                   <section
                     className={`xp-panel xp-detail-location ${tab === "location" ? "is-active" : ""}`}
                   >

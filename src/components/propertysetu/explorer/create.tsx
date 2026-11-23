@@ -1,3 +1,4 @@
+import { videoDuration, type MediaSettings } from "@/lib/mediaSettings";
 import { reverseGeocode } from "@/lib/reverse-geocode";
 import { AnimatedLoader } from "@/components/ui/animated-loader";
 import { listingPayment } from "@/lib/listing-payment";
@@ -122,7 +123,7 @@ type Draft = typeof initial;
 function buildPropertyPayload(
   draft: Draft,
   photos: string[],
-  video: string,
+  videos: string[],
   amenities: string[],
   features: string[],
   documents: Record<string, string>,
@@ -172,15 +173,7 @@ function buildPropertyPayload(
         image_type: "gallery",
         is_cover: index === 0,
       })),
-      ...(video
-        ? [
-            {
-              image_url: video,
-              image_type: "video",
-              is_cover: false,
-            },
-          ]
-        : []),
+      ...videos.map(image_url => ({ image_url, image_type: "video", is_cover: false })),
     ],
     amenity_ids: amenities,
     features: features.map((feature_key) => ({
@@ -252,7 +245,7 @@ export function CreatePropertyPage({ id }: { id?: string }) {
   const finalStep = mobile ? 7 : 4;
   const [draft, setDraft] = useState(initial);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [video, setVideo] = useState("");
+  const [videos, setVideos] = useState<string[]>([]);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
   const [documents, setDocuments] = useState<Record<string, string>>({});
@@ -270,6 +263,7 @@ export function CreatePropertyPage({ id }: { id?: string }) {
   const categories = useResource<Category[]>("/categories");
   const amenitiesList = useResource<{ id: string; name: string }[]>("/amenities");
   const settings = useResource<ListingSettings>("/listing-settings");
+  const media = useResource<MediaSettings>("/media-settings");
   const eligible = useResource<{ available: boolean }>(
     app.token ? "/me/free-listing" : null,
     app.token,
@@ -294,7 +288,7 @@ export function CreatePropertyPage({ id }: { id?: string }) {
         ?.filter((image) => image.image_type !== "video")
         .map((image) => image.image_url) || [],
     );
-    setVideo(item.images?.find((image) => image.image_type === "video")?.image_url || "");
+    setVideos(item.images?.filter(image => image.image_type === "video").map(image => image.image_url) || []);
     setAmenities(item.amenities?.map((amenity) => amenity.id) || []);
     setFeatures(
       item.features
@@ -367,6 +361,8 @@ export function CreatePropertyPage({ id }: { id?: string }) {
   async function saveDraft() {
     if (!app.token) throw new Error("Sign in to post a property.");
     if (photos.length < 2) throw new Error("Add at least 2 photos before saving your listing.");
+    const limits = await productRequest<MediaSettings>("/media-settings");
+    if (photos.length > limits.maxPhotos || videos.length > limits.maxVideos) throw new Error(`This property allows up to ${limits.maxPhotos} photos and ${limits.maxVideos} videos. Remove extra media before saving.`);
     if (!owned) throw new Error("Only the owner can edit this property.");
     if (draft.title.trim().length < 3) throw new Error("Add a title with at least 3 characters.");
     const latest = savedId
@@ -377,7 +373,7 @@ export function CreatePropertyPage({ id }: { id?: string }) {
     const payload = buildPropertyPayload(
       draft,
       photos,
-      video,
+      videos,
       amenities,
       features,
       documents,
@@ -819,18 +815,19 @@ export function CreatePropertyPage({ id }: { id?: string }) {
       <label className="xp-media-drop">
         <ImagePlus size={32} />
         <strong>{"Add property photos"}</strong>
-        <span>{"At least 2 photos. The first photo is your cover."}</span>
+        <span>{media.data ? `2–${media.data.maxPhotos} photos. The first photo is your cover.` : "Loading photo limits…"}</span>
         <input
           type="file"
           accept="image/*"
           multiple={true}
-          disabled={action.busy}
+          disabled={action.busy || !media.data}
           onClick={requireUploadSession}
           onChange={(event) => {
             const files = Array.from(event.target.files || []);
             action.run(async () => {
-              if (files.length + photos.length > 29)
-                throw new Error("You can add up to 29 photos and one video.");
+              const limits = await productRequest<MediaSettings>("/media-settings");
+              if (files.length + photos.length > limits.maxPhotos)
+                throw new Error(`You can add up to ${limits.maxPhotos} photos.`);
               for (const file of files) {
                 const url = await uploadFile(file, app.token!);
                 setPhotos((previous) => [...previous, url]);
@@ -859,7 +856,7 @@ export function CreatePropertyPage({ id }: { id?: string }) {
             )}
             <button
               type="button"
-              disabled={action.busy}
+              disabled={action.busy || !media.data}
               className="xp-remove"
               aria-label={`Remove photo ${index + 1}`}
               onClick={() => setPhotos((previous) => previous.filter((value) => value !== url))}
@@ -869,26 +866,36 @@ export function CreatePropertyPage({ id }: { id?: string }) {
           </div>
         ))}
       </div>
-      <Field label="Property video (optional)">
+      {media.error && <p role="alert">Could not load upload limits. Please reload this page before uploading.</p>}
+      <Field label="Property videos (optional)">
+        <p>{media.data ? `${videos.length}/${media.data.maxVideos} videos. Maximum ${media.data.maxVideoDurationSeconds} seconds per video.` : "Loading video limits…"}</p>
         <input
-          type="file"
-          accept="video/*"
-          disabled={action.busy}
+          type="file" accept="video/*" multiple
+          disabled={action.busy || !media.data || videos.length >= media.data.maxVideos}
           onClick={requireUploadSession}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) action.run(async () => setVideo(await uploadFile(file, app.token!, "video")));
+          onChange={event => {
+            const files = Array.from(event.target.files || []);
+            event.target.value = "";
+            action.run(async () => {
+              const limits = await productRequest<MediaSettings>("/media-settings");
+              if (files.length + videos.length > limits.maxVideos) throw new Error(`You can add up to ${limits.maxVideos} videos.`);
+              for (const file of files) {
+                if (await videoDuration(file) > limits.maxVideoDurationSeconds + 0.05) throw new Error(`Each video must be ${limits.maxVideoDurationSeconds} seconds or shorter.`);
+              }
+              for (const file of files) {
+                const url = await uploadFile(file, app.token!, "video");
+                setVideos(previous => [...previous, url]);
+              }
+            });
           }}
         />
       </Field>
-      {video && (
-        <div className="xp-row">
-          <video className="xp-upload-video" controls={true} src={video} />
-          <button type="button" className="xp-text-button" onClick={() => setVideo("")}>
-            {"Remove video"}
-          </button>
+      {videos.map((url, index) => (
+        <div className="xp-row" key={`${url}-${index}`}>
+          <video className="xp-upload-video" controls src={url} preload="metadata" />
+          <button type="button" disabled={action.busy} className="xp-text-button" onClick={() => setVideos(previous => previous.filter((_, i) => i !== index))}>Remove video {index + 1}</button>
         </div>
-      )}
+      ))}
     </>
   );
   const documentFields = (

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Status, useAdmin } from './admin';
+import { MediaSettingsForm } from './media-settings';
 import { ThemeSettings } from './theme-settings';
 
 type ListingSettings = {
@@ -177,11 +178,12 @@ export function Settings() {
 
   return <>
     <h1>Settings</h1>
-    <p className="admin-subtitle">Colour theme, listing amounts, premium offers, and demo logins that skip SMS.</p>
+    <p className="admin-subtitle">Colour theme, photo and video limits, listing amounts, premium offers, and demo logins that skip SMS.</p>
     {error ? <div role="alert" className="error-notice">{error}</div> : null}
     {notice ? <div className="settings-preview">{notice}</div> : null}
 
     <ThemeSettings />
+    <MediaSettingsForm />
 
     <section className="admin-section">
       <div className="admin-section-head"><h2>Listing amounts</h2></div>

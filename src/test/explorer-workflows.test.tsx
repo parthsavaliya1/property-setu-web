@@ -1,3 +1,4 @@
+import { defaultMediaSettings } from "@/lib/mediaSettings";
 import { reverseGeocode } from "@/lib/reverse-geocode";
 import { detectIpCity } from "@/lib/ip-city";
 import { ExplorerLanguageProvider } from "@/components/propertysetu/explorer/language";
@@ -60,6 +61,7 @@ function response(path: string, options?: RequestInit) {
   if (path === "/api/wallet/transactions") return [];
   if (path === "/api/categories") return [{ id: "category-one", slug: "house", name: "House" }];
   if (path === "/api/amenities") return [];
+  if (path === "/api/media-settings") return defaultMediaSettings;
   if (path === "/api/listing-settings")
     return { standardPrice: 100, premiumPrice: 200, yearlyDiscountPercent: 20 };
   if (path === "/api/me/free-listing") return { available: false };
@@ -1489,5 +1491,51 @@ describe("Native mobile screen layouts", () => {
       ([path, options]) => path === "/api/visits/visit-one" && options?.method === "PATCH",
     );
     expect(JSON.parse(String(update?.[1]?.body))).toEqual({ status: "confirmed" });
+  });
+});
+
+
+describe("admin-controlled listing media", () => {
+  it("preserves both existing videos when editing and saving a property", async () => {
+    const listing = listingRecord();
+    listing.images.push(
+      { id: "video1", image_url: "https://media.example/one.mp4", image_type: "video", is_cover: false },
+      { id: "video2", image_url: "https://media.example/two.mp4", image_type: "video", is_cover: false },
+    );
+    request.mockImplementation(async (path, options) => {
+      if (path === "/api/media-settings") return { ...defaultMediaSettings, maxVideos: 2 };
+      if (path === "/api/properties/listing-one") return listing;
+      return response(path, options);
+    });
+    await mount(<CreatePropertyPage id="listing-one" />, { view: "create", id: "listing-one" });
+    for (let step = 0; step < 3; step++) await click("Continue");
+    expect(container.querySelectorAll("video")).toHaveLength(2);
+    expect(container.textContent).toContain("2/2 videos. Maximum 60 seconds per video.");
+    await click("Continue");
+    await submit();
+    const update = request.mock.calls.find(([path, options]) => path === "/api/properties/listing-one" && options?.method === "PATCH");
+    const images = JSON.parse(String(update?.[1]?.body)).images;
+    expect(images.filter((image: { image_type: string }) => image.image_type === "video")).toHaveLength(2);
+    expect(images.filter((image: { image_type: string }) => image.image_type !== "video")).toHaveLength(2);
+  });
+
+  it("rejects a video selection exceeding the admin count before uploading", async () => {
+    const listing = listingRecord();
+    listing.images.push({ id: "video1", image_url: "https://media.example/one.mp4", image_type: "video", is_cover: false });
+    request.mockImplementation(async (path, options) => {
+      if (path === "/api/media-settings") return { ...defaultMediaSettings, maxVideos: 2 };
+      if (path === "/api/properties/listing-one") return listing;
+      return response(path, options);
+    });
+    await mount(<CreatePropertyPage id="listing-one" />, { view: "create", id: "listing-one" });
+    for (let step = 0; step < 3; step++) await click("Continue");
+    const input = container.querySelector<HTMLInputElement>('input[accept="video/*"]')!;
+    await act(async () => {
+      Object.defineProperty(input, "files", { configurable: true, value: [new File(["one"], "one.mp4", { type: "video/mp4" }), new File(["two"], "two.mp4", { type: "video/mp4" })] });
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(container.textContent).toContain("You can add up to 2 videos.");
+    expect(container.querySelectorAll("video")).toHaveLength(1);
+    expect(request.mock.calls.some(([path]) => path === "/api/uploads")).toBe(false);
   });
 });

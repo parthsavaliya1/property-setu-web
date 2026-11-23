@@ -3,7 +3,7 @@ import { useMobileLayout } from "./explorer/use-mobile-layout";
 import { useExplorerLanguage } from "./explorer/language";
 import { AnimatedLoader } from "@/components/ui/animated-loader";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import {
   MapPin,
   Plus,
   Search,
+  Warehouse,
   SlidersHorizontal,
   UserRound,
   Wallet,
@@ -40,11 +41,48 @@ const categories = [
   { name: "Shop", icon: "storefront-outline", param: "category", value: "shop" },
 ] satisfies Array<{ name: string; icon: AppCategoryIconName; param: string; value: string }>;
 
+const mobileCategories = [
+  { name: "House", value: "house", icon: "home-outline" },
+  { name: "Apartment", value: "apartment", icon: "office-building" },
+  { name: "Villa", value: "villa", icon: "home-variant" },
+  { name: "Plot", value: "residential-plot", icon: "checkbox-blank-outline" },
+  { name: "Land", value: "agricultural-land", icon: "upload" },
+  { name: "Shop", value: "shop", icon: "storefront-outline" },
+  { name: "Office", value: "office", icon: "office-building" },
+  { name: "Commercial plot", value: "commercial-plot", icon: "checkbox-blank-outline" },
+  { name: "Warehouse", value: "warehouse", icon: null },
+] satisfies Array<{ name: string; value: string; icon: AppCategoryIconName | null }>;
+
+function HomeFilters({ mobile, open, onOpenChange, onApply, children }: {
+  mobile: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApply: () => void;
+  children: ReactNode;
+}) {
+  if (!mobile) return open ? <>{children}</> : null;
+  return <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="xp-modal-overlay" />
+      <Dialog.Content className="home-filter-sheet" aria-describedby={undefined}>
+        <div className="home-filter-sheet-heading">
+          <Dialog.Title>Filters</Dialog.Title>
+          <Dialog.Close aria-label="Close filters"><X size={22} /></Dialog.Close>
+        </div>
+        {children}
+        <button type="button" className="xp-button home-filter-apply" onClick={onApply}>Apply filters</button>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>;
+}
+
 export function PropertyHome() {
   const { text } = useExplorerLanguage();
   const app = useExplorer();
   const action = useAction();
   const mobile = useMobileLayout();
+  const appHome = app?.location.view === "home";
+  const nativeHome = mobile && appHome;
   const [chosenCity, setChosenCity] = useState("");
   const [ipCity, setIpCity] = useState("");
   const [locatingCity, setLocatingCity] = useState(true);
@@ -78,7 +116,7 @@ export function PropertyHome() {
   const [minPrice, setMinPrice] = useState(app?.location.min_price || "");
   const [beds, setBeds] = useState(app?.location.bedrooms || "");
   const [sort, setSort] = useState("recommended");
-  const [listingType, setListingType] = useState(app?.location.listing_type || "");
+  const [listingType, setListingType] = useState(app?.location.listing_type || (appHome ? "sale" : ""));
   const [hasMore, setHasMore] = useState(false);
   const queryKey = useRef("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -86,6 +124,8 @@ export function PropertyHome() {
   const [query, setQuery] = useState(app?.location.q || "");
   const [search, setSearch] = useState(app?.location.q || "");
   const [category, setCategory] = useState(app?.location.category || "");
+  const homeIntent = ["commercial", "shop", "office", "commercial-plot", "warehouse"].includes(category)
+    ? "commercial" : listingType || "sale";
   const [rows, setRows] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -162,7 +202,7 @@ export function PropertyHome() {
     if (app?.location.view === "search") searchRef.current?.focus();
   }, [app?.location.view]);
   const slides = [
-    "/images/app-home-banner.jpg",
+    appHome ? "/images/app-dream-home-banner.jpg" : "/images/app-home-banner.jpg",
     ...(banners.data || []).map((item) => item.image_url),
   ];
   useEffect(() => {
@@ -223,7 +263,7 @@ export function PropertyHome() {
 
   const isSearch = app?.location.view === "search";
   return (
-    <div className={`property-home ${isSearch ? "home-search-page" : ""}`}>
+    <div className={`property-home ${isSearch ? "home-search-page" : ""} ${nativeHome ? "home-native-current" : ""}`}>
       <a className="home-skip" href="#home-listings">
         Skip to properties
       </a>
@@ -236,7 +276,8 @@ export function PropertyHome() {
                 onClick={() => setMenuOpen(true)}
                 aria-label="Open menu"
               >
-                <img src="/images/app-menu-logo.png" alt="" />
+                <img src={nativeHome ? "/images/app-current-logo.png" : "/images/app-menu-logo.png"} alt="" />
+                {nativeHome && <strong>Property Setu</strong>}
               </button>
               <div>
                 <span className="home-location-caption">
@@ -256,6 +297,7 @@ export function PropertyHome() {
                         setCityPickerOpen(true);
                       }}
                     >
+                      {nativeHome && <MapPin size={14} aria-hidden="true" />}
                       {browseCity || text(locatingCity ? "Finding city" : "All properties")}
                     </button>
                   )}
@@ -308,7 +350,7 @@ export function PropertyHome() {
               aria-label="Search properties"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search city, area or property…"
+              placeholder={nativeHome ? "Search locality or property" : "Search city, area or property…"}
             />
             <button
               type="button"
@@ -327,7 +369,10 @@ export function PropertyHome() {
             </button>
           </form>
         </div>
-        {filtersOpen && (
+        <HomeFilters mobile={mobile} open={filtersOpen} onOpenChange={setFiltersOpen} onApply={() => {
+          setFiltersOpen(false);
+          app?.search({ q: query.trim(), city: city.trim(), category, listing_type: listingType, min_price: minPrice, max_price: budget, bedrooms: beds });
+        }}>
           <div className="home-filters" id="home-filters">
             <label htmlFor="home-budget">Maximum price</label>
             <select
@@ -345,8 +390,6 @@ export function PropertyHome() {
               <option value="20000000">₹2 crore</option>
             </select>
           </div>
-        )}
-        {filtersOpen && (
           <div className="xp-home-extra-filters">
             <label>
               City
@@ -396,7 +439,7 @@ export function PropertyHome() {
               </select>
             </label>
           </div>
-        )}
+        </HomeFilters>
         {mobile && (
           <div className="xp-browse-tools">
             <ExploreLink view="map">
@@ -406,7 +449,32 @@ export function PropertyHome() {
           </div>
         )}
         <ActionError error={action.error} />
-        <section className="home-categories" aria-label="Property categories">
+        {appHome && (
+          <section className="home-native-categories" aria-label="Property categories">
+            <div className="home-intent-tabs" aria-label="Property purpose">
+              {[{ label: "Buy", value: "sale" }, { label: "Rent", value: "rent" }, { label: "Commercial", value: "commercial" }].map(item => (
+                <button key={item.value} type="button" aria-pressed={homeIntent === item.value} onClick={() => {
+                  setListingType(item.value === "commercial" ? "" : item.value);
+                  if (item.value === "commercial" || homeIntent === "commercial") {
+                    setCategory(item.value === "commercial" ? "commercial" : "");
+                  }
+                }}>{text(item.label)}</button>
+              ))}
+            </div>
+            <div className="home-subcategory-tabs">
+              <button type="button" aria-pressed={!category || category === "commercial"} onClick={() => setCategory(homeIntent === "commercial" ? "commercial" : "")}>{text("All")}</button>
+              {mobileCategories.filter(item => homeIntent === "commercial"
+                ? ["shop", "office", "commercial-plot", "warehouse"].includes(item.value)
+                : !["shop", "office", "commercial-plot", "warehouse"].includes(item.value)).map(item => (
+                <button key={item.value} type="button" aria-pressed={category === item.value} onClick={() => setCategory(item.value)}>
+                  {item.icon ? <AppCategoryIcon name={item.icon} /> : <Warehouse size={16} aria-hidden="true" />}
+                  {text(item.name)}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        {!appHome && <section className="home-categories" aria-label="Property categories">
           <div className="home-category-heading">
             <h2>What are you looking for?</h2>
             <span>A space for every plan</span>
@@ -428,23 +496,26 @@ export function PropertyHome() {
               </button>
             ))}
           </div>
-        </section>
-        <a href="#home-listings" className="home-banner">
+        </section>}
+        <a href={nativeHome ? "/explore?view=search" : "#home-listings"} className={`home-banner ${bannerIndex % slides.length === 0 ? "home-banner-first" : ""}`} onClick={nativeHome ? (event) => {
+          event.preventDefault();
+          app?.search({});
+        } : undefined}>
           <img
             src={slides[bannerIndex % slides.length]}
-            alt={bannerIndex > 0 ? "PropertySetu promotion" : ""}
+            alt={bannerIndex % slides.length > 0 ? "PropertySetu promotion" : ""}
           />
-          <div hidden={bannerIndex > 0}>
+          <div hidden={bannerIndex % slides.length > 0}>
             <span className="home-banner-kicker">YOUR NEXT CHAPTER</span>
-            <h2>{text("Find your dream home")}</h2>
-            <p>{text("Homes, plots, and land")}</p>
+            <h2>{text(appHome ? "Your next chapter starts here" : "Find your dream home")}</h2>
+            {!appHome && <p>{text("Homes, plots, and land")}</p>}
             <span className="home-banner-action">
               {text("Explore now")} <ArrowRight size={14} />
             </span>
           </div>
         </a>
         <div id="home-listings" className="home-results" aria-live="polite" aria-busy={loading}>
-          {filtered && (
+          {filtered && !nativeHome && (
             <div className="home-applied-filters">
               <span>Applied filters</span>
               <ul aria-label="Applied property filters">
@@ -452,7 +523,7 @@ export function PropertyHome() {
               </ul>
             </div>
           )}
-          {filtered && (
+          {filtered && !nativeHome && (
             <div className="home-result-summary">
               <span>
                 {search ? `Results for “${search}”` : categories.find((item) => item.value === category)?.name || "Filtered properties"}
@@ -508,7 +579,7 @@ export function PropertyHome() {
                       <span>EXCEPTIONAL SPACES</span>
                       <h2>Premium properties</h2>
                     </div>
-                    <span className="home-section-count">{premium.length} properties</span>
+                    {nativeHome ? <button type="button" className="home-see-all" onClick={() => app?.search({ listing_type: listingType, category })}>{text("See all")}</button> : <span className="home-section-count">{premium.length} properties</span>}
                   </div>
                   <div className="home-premium-grid">
                     {premium.map((row) => (
@@ -529,7 +600,7 @@ export function PropertyHome() {
                       <span>EXPLORE THE POSSIBILITIES</span>
                       <h2>Simple properties</h2>
                     </div>
-                    <span className="home-section-count">{standard.length} properties</span>
+                    {nativeHome ? <button type="button" className="home-see-all" onClick={() => app?.search({ listing_type: listingType, category })}>{text("See all")}</button> : <span className="home-section-count">{standard.length} properties</span>}
                   </div>
                   <div className="property-grid home-property-grid">
                     {standard.map((row) => (

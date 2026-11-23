@@ -1,3 +1,4 @@
+import { PropertyVideoCard } from "../video-card";
 import { videoDuration, type MediaSettings } from "@/lib/mediaSettings";
 import { reverseGeocode } from "@/lib/reverse-geocode";
 import { AnimatedLoader } from "@/components/ui/animated-loader";
@@ -890,12 +891,9 @@ export function CreatePropertyPage({ id }: { id?: string }) {
           }}
         />
       </Field>
-      {videos.map((url, index) => (
-        <div className="xp-row" key={`${url}-${index}`}>
-          <video className="xp-upload-video" controls src={url} preload="metadata" />
-          <button type="button" disabled={action.busy} className="xp-text-button" onClick={() => setVideos(previous => previous.filter((_, i) => i !== index))}>Remove video {index + 1}</button>
-        </div>
-      ))}
+      <div className="ps-video-cards">
+        {videos.map((url, index) => <PropertyVideoCard key={`${url}-${index}`} src={url} poster={photos[0] || null} index={index} disabled={action.busy} onRemove={() => setVideos(previous => previous.filter((_, i) => i !== index))} />)}
+      </div>
     </>
   );
   const documentFields = (

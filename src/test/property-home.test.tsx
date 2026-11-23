@@ -11,6 +11,7 @@ vi.mock("@/lib/propertysetu", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/propertysetu")>()),
   api: vi.fn(),
 }));
+vi.mock("@/lib/ip-city", () => ({ detectIpCity: vi.fn().mockResolvedValue("Ahmedabad") }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
     to,
@@ -44,6 +45,7 @@ function button(name: string) {
 afterEach(async () => {
   if (root) await act(async () => root.unmount());
   container?.remove();
+  vi.restoreAllMocks();
 });
 beforeEach(() => {
   request.mockReset();
@@ -51,6 +53,78 @@ beforeEach(() => {
 });
 
 describe("Property browsing", () => {
+  it("shows the app category controls on desktop and resets commercial filters when returning to Buy", async () => {
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => root.render(
+      <ExplorerProvider location={{ view: "home" }} navigate={() => {}}>
+        <PropertyHome />
+      </ExplorerProvider>,
+    ));
+    expect(container.querySelector(".home-categories")).toBeNull();
+    expect(container.querySelector(".home-intent-tabs")).toBeTruthy();
+    await act(async () => button("Commercial").click());
+    await act(async () => button("Office").click());
+    const latestQuery = () => new URL(String(request.mock.calls.filter(([path]) => String(path).startsWith("/api/properties?")).at(-1)?.[0]), "http://localhost").searchParams;
+    expect(latestQuery().get("category")).toBe("office");
+    expect(latestQuery().has("listing_type")).toBe(false);
+    await act(async () => button("Buy").click());
+    expect(latestQuery().get("listing_type")).toBe("sale");
+    expect(latestQuery().has("category")).toBe(false);
+    expect(button("All").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("uses native mobile purpose and category filters and carries them into search", async () => {
+    const original = window.matchMedia;
+    vi.spyOn(window, "matchMedia").mockImplementation(query => ({
+      ...original(query), matches: query === "(max-width: 700px)",
+    }));
+    const navigate = vi.fn();
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => root.render(
+      <ExplorerProvider location={{ view: "home" }} navigate={navigate}>
+        <PropertyHome />
+      </ExplorerProvider>,
+    ));
+    const native = () => container.querySelector(".home-native-categories")!;
+    const choose = async (label: string) => {
+      const target = Array.from(native().querySelectorAll("button")).find(item => item.textContent === label)!;
+      expect(target).toBeTruthy();
+      await act(async () => target.click());
+      expect(target.getAttribute("aria-pressed")).toBe("true");
+    };
+    const latestQuery = () => new URL(String(request.mock.calls.filter(([path]) => String(path).startsWith("/api/properties?")).at(-1)?.[0]), "http://localhost").searchParams;
+    expect(latestQuery().get("listing_type")).toBe("sale");
+    await choose("Rent");
+    await choose("Apartment");
+    expect(latestQuery().get("listing_type")).toBe("rent");
+    expect(latestQuery().get("category")).toBe("apartment");
+    await choose("Commercial");
+    expect(latestQuery().has("listing_type")).toBe(false);
+    expect(latestQuery().get("category")).toBe("commercial");
+    await choose("Warehouse");
+    expect(latestQuery().get("category")).toBe("warehouse");
+    await act(async () => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+    expect(navigate).toHaveBeenLastCalledWith(expect.objectContaining({ view: "search", category: "warehouse", listing_type: "" }));
+    await choose("Buy");
+    expect(latestQuery().get("listing_type")).toBe("sale");
+    expect(latestQuery().has("category")).toBe(false);
+    await act(async () => button("Property filters").click());
+    const sheet = document.querySelector('[role="dialog"]')!;
+    expect(sheet.textContent).toContain("Filters");
+    const budget = sheet.querySelector<HTMLSelectElement>("#home-budget")!;
+    await act(async () => {
+      budget.value = "5000000";
+      budget.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await act(async () => Array.from(sheet.querySelectorAll("button")).find(item => item.textContent === "Apply filters")!.click());
+    expect(navigate).toHaveBeenLastCalledWith(expect.objectContaining({ view: "search", listing_type: "sale", max_price: "5000000" }));
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
   it("immediately applies every homepage shortcut to the API and shows its active filters", async () => {
     container = document.createElement("div");
     document.body.append(container);

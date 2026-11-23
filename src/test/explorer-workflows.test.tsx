@@ -1509,7 +1509,7 @@ describe("admin-controlled listing media", () => {
     });
     await mount(<CreatePropertyPage id="listing-one" />, { view: "create", id: "listing-one" });
     for (let step = 0; step < 3; step++) await click("Continue");
-    expect(container.querySelectorAll("video")).toHaveLength(2);
+    expect(container.querySelectorAll(".ps-video-card")).toHaveLength(2);
     expect(container.textContent).toContain("2/2 videos. Maximum 60 seconds per video.");
     await click("Continue");
     await submit();
@@ -1535,7 +1535,7 @@ describe("admin-controlled listing media", () => {
       input.dispatchEvent(new Event("change", { bubbles: true }));
     });
     expect(container.textContent).toContain("You can add up to 2 videos.");
-    expect(container.querySelectorAll("video")).toHaveLength(1);
+    expect(container.querySelectorAll(".ps-video-card")).toHaveLength(1);
     expect(request.mock.calls.some(([path]) => path === "/api/uploads")).toBe(false);
   });
 });

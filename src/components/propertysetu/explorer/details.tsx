@@ -1,3 +1,4 @@
+import { PropertyVideoCard } from "../video-card";
 import { MobilePageHeader } from "./mobile";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState } from "react";
@@ -136,6 +137,12 @@ export function DetailsPage({ id }: { id: string }) {
                       ))}
                     </div>
                   )}
+                  {videos.length > 0 && <section className="ps-property-videos" aria-label="Property videos">
+                    <h2>Property videos</h2>
+                    <div className="ps-video-cards">
+                      {videos.map((video, index) => <PropertyVideoCard key={video.id || `${video.image_url}-${index}`} src={video.image_url} poster={video.thumbnail_url || photos[0] || null} index={index} />)}
+                    </div>
+                  </section>}
                   <div className="xp-mobile-detail-summary">
                     <h1>{row.title}</h1>
                     {!own && (
@@ -251,17 +258,7 @@ export function DetailsPage({ id }: { id: string }) {
                       </>
                     ) : null}
                   </section>
-                  {videos.map((video, index) => (
-                    <section className="xp-panel" key={video.id || `${video.image_url}-${index}`}>
-                      <h2>Property video {index + 1}</h2>
-                      <video
-                        controls
-                        preload="metadata"
-                        src={video.image_url}
-                        className="xp-video"
-                      />
-                    </section>
-                  ))}
+
                   <section
                     className={`xp-panel xp-detail-location ${tab === "location" ? "is-active" : ""}`}
                   >
